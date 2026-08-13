@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-green
+  namespace: credpay
+  labels:
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/part-of: credpay
+    version: green
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: frontend
+      version: green
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: frontend
+          app.kubernetes.io/part-of: credpay
+          version: green
+      spec:
+        automountServiceAccountToken: false
+        securityContext:
+          runAsNonRootUser: false
+          seccompProfile:
+            type: RuntimeDefault
+        containers:
+          - name: frontend
+            image: credpayacr.azurecr.io/credpay/frontend:latest
+            imagePullPolicy: Always
+            ports:
+              - name: http
+                containerPort: 80
+            readinessProbe:
+              httpGet:
+                path: /
+                port: http
+              initialDelaySeconds: 5
+              periodSeconds: 10
+            livenessProbe:
+              httpGet:
+                path: /
+                port: http
+              initialDelaySeconds: 10
+              periodSeconds: 20
+            resources:
+              requests:
+                cpu: "50m"
+                memory: "64Mi"
+              limits:
+                cpu: "200m"
+                memory: "128Mi"
+            securityContext:
+              allowPrivilegeEscalation: false
+

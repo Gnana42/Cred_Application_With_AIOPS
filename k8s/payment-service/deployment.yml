@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: credpay
+  labels:
+    app.kubernetes.io/name: payment-service
+    app.kubernetes.io/part-of: credpay
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: payment-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: payment-service
+          app.kubernetes.io/part-of: credpay
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8000"
+          prometheus.io/path: "/metrics/prometheus"
+      spec:
+        securityContext:
+          runAsUser: 1001
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumes:
+          - name: tmp
+            emptydir: {}
+        containers:
+          - name: payment-service
+            image: "credpayacr.azurecr.io/payment-service:latest"
+            imagePullPolicy: Always
+            ports:
+              - containerPort: 8000
+                name: http
+                protocol: TCP
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+            envFrom:
+              - configMapRef:
+                  name: credpay-config
+            env:
+              - name: DB_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: credpay-db
+                    key: DB_PASSWORD
+            startupProbe:
+              httpGet:
+                path: /health
+                port: http
+              initialDelay: 05
+              periodSeconds: 10
+              failureThreshold: 30
+            readinessProbe:
+              httpGet:
+                path: /health
+                port: http
+              initialDelay: 05
+              periodSeconds: 10
+              failureThreshold: 30
+            livenessProbe:
+              httpGet:
+                path: /health
+                port: http
+              initialDelay: 05
+              periodSeconds: 10
+              failureThreshold: 30
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "300m"
+
+
