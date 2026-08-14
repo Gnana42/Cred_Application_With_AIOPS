@@ -4,3 +4,64 @@
 pool:
   vmImage: ubuntu-latest
 
+variables:
+  # Azure service connections
+  acrServiceConnection: 'ACRSC'
+  azureServiceConnection: 'Jarvis-Manual'
+
+  # ACR resource name (not the service connection name above)
+  # `az aks update --attach-acr`, which takes the registry's own name.
+  acrName: 'credpayacr'
+
+  # Image tag - every build is pushed as both $(tag) and :latest
+  tag: '$(Build.BuildId)'
+
+  # Repositories in ACR
+  frontendRepository: 'credpay/frontend'
+  userRepository: 'credpay/user-service'
+  paymentRepository: 'credpay/payment-service'
+
+  # Terraform remote state backend
+  tfStateRg: 'Capstone-RG'
+  tfStateStorage: 'credbackendstorage'
+  tfStateContainer: 'statefile'
+  tfStateKey: 'credpay.terraform.tfstate'
+
+  # AKS cluster - deterministic names from terraform/main.tf's
+  # name_prefix = "credpay" (rg-credpay / aks-credpay)
+  aksResourceGroup: 'credpay-rg'
+  aksClusterName: 'aks-credpay'
+  k8sNameSpace: 'credpay'
+
+  # Azure Key Vault - created out-of-band (like the ACR), in the CredProj
+  # bootstrap RG (same RG as the Terraform state storage account, not
+  # rg-credpay). Terraform writes the Postgres secrets into it; the
+  # pipeline reads them back below.
+  keyVaultName: 'credpaykey-vault'
+  keyVaultResourceGroup: 'Capstone-RG'
+
+stages:
+  - stage: Terraform
+    displayName: Terraform Infrastructure
+    jobs:
+      - job: TerraformApply
+        displayName: Terraform Init & Apply
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            displayName: Install Terraform
+            inputs:
+              terraformVersion: 'latest'
+
+          - task: TerraformTask@5
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              backendAzureRmUseEntraIdForAuthentication: false
+              backendServiceArm: 'Jarvis-Manual'
+              backendAzureRmResourceGroupName: '$(tfStateRg)'
+              backendAzureRmStorageAccountName: '$(tfStateStorage)'
+              backendAzureRmContainerName: '$(tfStateContainer)'
+              backendAzureRmKey: '$(tfStateKey)'
+
+
