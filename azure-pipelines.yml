@@ -6,7 +6,7 @@ pool:
 
 variables:
   # Azure service connections
-  acrServiceConnection: 'ACRSC'
+  acrServiceConnection: 'ACR-SC'
   azureServiceConnection: 'Jarvis-Manual'
 
   # ACR resource name (not the service connection name above)
