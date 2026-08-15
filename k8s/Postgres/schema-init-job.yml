@@ -45,7 +45,7 @@ spec:
           volumeMounts:
             - name: schema
               mountPath: /schema
-              ReadOnly: true
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
