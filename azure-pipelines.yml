@@ -31,7 +31,7 @@ variables:
   # name_prefix = "credpay" (rg-credpay / aks-credpay)
   aksResourceGroup: 'credpay-rg'
   aksClusterName: 'aks-credpay'
-  k8sNameSpace: 'credpay'
+  k8sNamespace: 'credpay'
 
   # Azure Key Vault - created out-of-band (like the ACR), in the CredProj
   # bootstrap RG (same RG as the Terraform state storage account, not
