@@ -38,7 +38,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: credpay-db
-                  value: DB_PASSWORD
+                  key: DB_PASSWORD
           envFrom:
             - configMapRef:
                 name: credpay-config
