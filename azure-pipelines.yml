@@ -219,6 +219,7 @@ stages:
     #########################################################
 
           - task: AzureCLI@3
+            displayName: Ensure Ingress Controller Installed
             inputs:
               connectionType: 'azureRM'
               azureSubscription: '$(azureServiceConnection)'
@@ -325,7 +326,7 @@ stages:
                 
                 kubectl delete job db-schema-init -n $(k8sNamespace) --ignore-not-found
                 
-                kubectl apply -f k8s/postgres/schema-init-job.yaml
+                kubectl apply -f k8s/postgres/schema-init-job.yml
                 kubectl wait --for=condition=complete job/db-schema-init -n $(k8sNamespace) --timeout=120s
                 kubectl logs job/db-schema-init -n $(k8sNamespace)
 
