@@ -1,5 +1,5 @@
 apiVersion: autoscaling/v2
-kind: HorizantalPodAutoscaler
+kind: HorizontalPodAutoscaler
 metadata:
   name: fronted-blue
   namespace: credpay

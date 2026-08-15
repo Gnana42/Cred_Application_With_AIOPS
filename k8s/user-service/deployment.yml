@@ -22,10 +22,10 @@ spec:
       labels:
         app.kubernetes.io/name: user-service
         app.kubernetes.io/part-of: credpay
-    annotations:
-      prometheus.io/scrape: "true"
-      prometheus.io/port: 8080
-      prometheus.io/path: "/metrics/prometheus"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics/prometheus"
     spec:
       securityContext:
         runAsNonRoot: true
@@ -77,7 +77,7 @@ spec:
               cpu: "500m"
               memory: "768Mi"
           securityContext:
-            allowPreviligeEscalation: false
+            allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
               drop: [ "ALL" ] 
