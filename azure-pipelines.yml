@@ -37,10 +37,16 @@ variables:
   # bootstrap RG (same RG as the Terraform state storage account, not
   # rg-credpay). Terraform writes the Postgres secrets into it; the
   # pipeline reads them back below.
-  keyVaultName: 'credpaykey-vault'
+  keyVaultName: 'credpay-keyvault'
   keyVaultResourceGroup: 'Capstone-RG'
 
 stages:
+  # =========================================================
+  # STAGE 1 - TERRAFORM
+  # Provisions/updates AKS, PostgreSQL, networking, Log Analytics, and
+  # pushes the PostgreSQL credentials into the existing Azure Key Vault.
+  # =========================================================
+
   - stage: Terraform
     displayName: Terraform Infrastructure
     jobs:
@@ -54,14 +60,92 @@ stages:
               terraformVersion: 'latest'
 
           - task: TerraformTask@5
+            displayName: "Terraform Initialization"
             inputs:
               provider: 'azurerm'
               command: 'init'
+              workingDirectory: Terraform
               backendAzureRmUseEntraIdForAuthentication: false
-              backendServiceArm: 'Jarvis-Manual'
+              backendServiceArm: '$(azureServiceConnection)'
               backendAzureRmResourceGroupName: '$(tfStateRg)'
               backendAzureRmStorageAccountName: '$(tfStateStorage)'
               backendAzureRmContainerName: '$(tfStateContainer)'
               backendAzureRmKey: '$(tfStateKey)'
 
+          - task: TerraformTask@5
+            displayName: Terraform Apply (infra + push secrets to Key Vault)
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              commandOptions: >-
+                -var-file="terraform.tfvars" --auto-approve
+                -var="key_vault_name=$(keyVaultName)"
+                -var="key_vault_resource_group_name=$(keyVaultResourceGroup)"
+              workingDirectory: Terraform
+              environmentServiceNameAzureRM: '$(azureServiceConnection)'
 
+          - task: TerraformTask@5
+            displayName: Show Terraform Outputs
+            inputs:
+              provider: 'azurerm'
+              command: 'output'
+              workingDirectory: Terraform
+              environmentServiceNameAzureRM: '$(azureServiceConnection)'
+  # =========================================================
+  # STAGE 2 - BUILD & PUSH DOCKER IMAGES
+  # =========================================================
+  - stage: DockerBuild
+    displayName: Docker Build & Push
+    dependsOn: Terraform
+    jobs:
+      - job: BuildPushImages
+        displayName: Build Docker images and push to ACR
+        steps:
+          - checkout: self
+
+          #########################################################
+          # Display Build Information
+          #########################################################
+
+          - script: |
+              echo "Repository : $(Build.Repository.Name)"
+              echo "Branch     : $(Build.SourceBranch)"
+              echo "Build ID   : $(Build.BuildId)"
+              echo "Image Tag  : $(tag)"
+            displayName: Build Information
+
+          - task: Docker@2
+            displayName: Build & Push Frontend Image
+            inputs:
+              containerRegistry: '$(acrServiceConnection)'
+              repository: '$(frontendRepository)'
+              command: 'buildAndPush'
+              Dockerfile: 'frontend-react/dockerfile'
+              buildContext: 'frontend-react'
+              tags: |
+                $(tag)
+                latest
+
+          - task: Docker@2
+            displayName: Build & Push User Service Image
+            inputs:
+              containerRegistry: '$(acrServiceConnection)'
+              repository: '$(userRepository)'
+              command: 'buildAndPush'
+              Dockerfile: 'user-service/dockerfile'
+              buildContext: 'user-service'
+              tags: |
+                $(tag)
+                latest
+
+          - task: Docker@2
+            displayName: Build & Push Payment Service Image
+            inputs:
+              containerRegistry: '$(acrServiceConnection)'
+              repository: '$(paymentRepository)'
+              command: 'buildAndPush'
+              Dockerfile: 'payment-service/dockerfile'
+              buildContext: 'payment-service'
+              tags: |
+                $(tag)
+                latest
