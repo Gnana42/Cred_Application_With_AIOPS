@@ -393,13 +393,13 @@ stages:
                 
                 if ! kubectl get svc frontend -n $(k8sNamespace) >/dev/null 2>&1; then
                   echo "frontend Service doesn't exist yet - bootstrapping it (default color: blue)"
-                  kubectl apply -f k8s/frontend/service.yaml
+                  kubectl apply -f k8s/frontend/service.yml
                 fi
                 
-                kubectl apply -f k8s/frontend/deployment-blue.yaml
-                kubectl apply -f k8s/frontend/deployment-green.yaml
-                kubectl apply -f k8s/frontend/hpa-blue.yaml
-                kubectl apply -f k8s/frontend/hpa-green.yaml
+                kubectl apply -f k8s/frontend/deployment-blue.yml
+                kubectl apply -f k8s/frontend/deployment-green.yml
+                kubectl apply -f k8s/frontend/hpa-blue.yml
+                kubectl apply -f k8s/frontend/hpa-green.yml
                 
                 CURRENT_COLOR=$(kubectl get svc frontend -n $(k8sNamespace) -o jsonpath='{.spec.selector.version}')
                 if [ "$CURRENT_COLOR" = "blue" ]; then
