@@ -31,7 +31,7 @@ variables:
   # name_prefix = "credpay" (rg-credpay / aks-credpay)
   aksResourceGroup: 'credpay-rg'
   aksClusterName: 'aks-credpay'
-  k8sNameSpace: 'credpay'
+  k8sNamespace: 'credpay'
 
   # Azure Key Vault - created out-of-band (like the ACR), in the CredProj
   # bootstrap RG (same RG as the Terraform state storage account, not
@@ -343,9 +343,9 @@ stages:
               inlineScript: |
                 set -e
                 kubectl apply -f k8s/user-service/
-                kubectl rollout restart deployment/user-service -n $(k8s.Namespace)
-                kubectl rollout status deployment/user-service -n $(k8s.Namespace) --timeout=180s
-                kubectl get pods -n $(k8s.Namespace) -l app.kubernetes.io/name=user-service
+                kubectl rollout restart deployment/user-service -n $(k8sNamespace)
+                kubectl rollout status deployment/user-service -n $(k8sNamespace) --timeout=180s
+                kubectl get pods -n $(k8sNamespace) -l app.kubernetes.io/name=user-service
 
           #########################################################
           # Payment Service - Rolling Update (unchanged strategy)
@@ -360,9 +360,9 @@ stages:
               inlineScript: |
                 set -e
                 kubectl apply -f k8s/payment-service/
-                kubectl rollout restart deployment/payment-service -n $(k8s.Namespace)
-                kubectl rollout status deployment/payment-service -n $(k8s.Namespace) --timeout=180s
-                kubectl get pods -n $(k8s.Namespace) -l app.kubernetes.io/name=payment-service
+                kubectl rollout restart deployment/payment-service -n $(k8sNamespace)
+                kubectl rollout status deployment/payment-service -n $(k8sNamespace) --timeout=180s
+                kubectl get pods -n $(k8sNamespace) -l app.kubernetes.io/name=payment-service
 
           #########################################################
           # Frontend - Blue/Green
