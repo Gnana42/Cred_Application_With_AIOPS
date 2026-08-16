@@ -37,7 +37,7 @@ spec:
             emptyDir: {}
         containers:
           - name: payment-service
-            image: "credpaycr.azurecr.io/payment-service:latest"
+            image: "credpaycr.azurecr.io/credpay/payment-service:latest"
             imagePullPolicy: Always
             ports:
               - containerPort: 8000
