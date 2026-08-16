@@ -52,7 +52,7 @@ spec:
             - name: Spring_datasource_password
               valueFrom:
                 secretKeyRef:
-                  name: config-db
+                  name: credpay-db
                   key: Spring_datasource_password
           startupProbe:
             tcpSocket:
