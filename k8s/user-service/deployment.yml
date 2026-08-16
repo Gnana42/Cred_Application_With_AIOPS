@@ -49,11 +49,11 @@ spec:
             - configMapRef:
                 name: credpay-config
           env:
-            - name: Spring_datasource_password
+            - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: credpay-db
-                  key: Spring_datasource_password
+                  key: SPRING_DATASOURCE_PASSWORD
           startupProbe:
             tcpSocket:
               port: http
